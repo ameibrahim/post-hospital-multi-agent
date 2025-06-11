@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal - {{ patient_name }}</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="/static/patient.css">
+    <link rel="stylesheet" href="/static/gradio-chat.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Hello, {{ patient_name }}</h1>
+            <div class="header-info">
+                <span class="patient-id">ID: {{ patient.patient_id or 'Not Set' }}</span>
+                <a href="/logout" class="btn btn-sm">Logout</a>
+            </div>
+        </header>
+
+        {% if not patient or not patient.agent_id %}
+        <div class="section">
+            <div class="alert alert-info">
+                <h3>Welcome!</h3>
+                <p>Your healthcare assistant is being set up by your nurse. Please check back soon.</p>
+                <p><em>If you believe this is an error, please contact your healthcare provider.</em></p>
+            </div>
+        </div>
+        {% else %}
+        
+        <!-- Medical Info Section -->
+        <div class="section">
+            <h2>Your Medical Information</h2>
+            <div class="medical-info">
+                <div class="info-group">
+                    <h4>Current Conditions:</h4>
+                    <p>{{ patient.conditions|join(', ') or 'None listed' }}</p>
+                </div>
+                
+                <div class="info-group">
+                    <h4>Current Medications:</h4>
+                    {% if patient.medications %}
+                    <ul>
+                        {% for med in patient.medications %}
+                        <li><strong>{{ med.name }}:</strong> {{ med.dosage }} {{ med.frequency }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No medications listed</p>
+                    {% endif %}
+                </div>
+                
+                <div class="info-group">
+                    <h4>Allergies:</h4>
+                    <p>{{ patient.allergies|join(', ') or 'None known' }}</p>
+                </div>
+                
+                <div class="info-group">
+                    <h4>Discharge Plan:</h4>
+                    <p>{{ patient.discharge_plan or 'Standard follow-up care' }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Section - Same Width as Medical Info -->
+        <div class="section chat-section">
+            <div class="gradio-chat-container">
+                <div class="gradio-chat-inner">
+                    <!-- Chat Header -->
+                    <div class="gradio-chat-header">
+                        <div class="gradio-status-indicator"></div>
+                        <h3>Prof.Dux Healthcare Assistant</h3>
+                        <p>Your personal AI doctor is here to help with your recovery</p>
+                    </div>
+                    
+                    <!-- Messages Container -->
+                    <div class="gradio-messages-container" id="gradioMessages">
+                        {% if messages %}
+                            {% for message in messages %}
+                            <div class="gradio-message {{ 'user' if message.role == 'user' else ('system' if message.role == 'system' else 'assistant') }}">
+                                <div class="gradio-avatar">
+                                    {% if message.role == 'user' %}
+                                        {{ patient_name[0] }}
+                                    {% elif message.role == 'system' %}
+                                        👩‍⚕️
+                                    {% else %}
+                                        
+                                    {% endif %}
+                                </div>
+                                <div class="gradio-message-content">
+                                    {% if message.role == 'user' %}
+                                        {{ message.text }}
+                                    {% elif message.role == 'system' %}
+                                        {{ message.text }}
+                                    {% else %}
+                                        {{ message.text }}
+                                    {% endif %}
+                                    <div class="gradio-message-time">Just now</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="gradio-welcome-message">
+                                <div class="gradio-welcome-avatar"></div>
+                                <h3>Welcome to your healthcare portal!</h3>
+                                <p>I'm <strong>Prof.Dux</strong>, your personal AI healthcare assistant. I'm here to help you with questions about your medications, symptoms, and recovery journey.</p>
+                                <p>Feel free to ask me anything about your health or use the quick actions below!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Typing Indicator -->
+                    <div class="gradio-typing-indicator" id="gradioTyping">
+                        Prof.Dux is thinking
+                        <span class="gradio-typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </span>
+                    </div>
+                    
+                    <!-- Input Container -->
+                    <div class="gradio-input-container">
+                        <div class="gradio-input-row">
+                            <div class="gradio-input-wrapper">
+                                <textarea 
+                                    id="gradioInput" 
+                                    class="gradio-input" 
+                                    placeholder="Ask Prof.Dux about your health, medications, or recovery..."
+                                    rows="1"></textarea>
+                                <button id="gradioSendBtn" class="gradio-send-button" onclick="sendGradioMessage()">
+                                    ➤
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="gradio-quick-actions">
+                        <h4>Quick Questions</h4>
+                        <div class="gradio-quick-buttons">
+                            <button onclick="gradioQuickMessage('How should I take my medications today?')" class="gradio-quick-button">
+                                💊 Medication Schedule
+                            </button>
+                            <button onclick="gradioQuickMessage('I\'m experiencing concerning symptoms and would like the nurse to be informed')" class="gradio-quick-button">
+                                🚨 Report to Nurse
+                            </button>
+                            <button onclick="gradioQuickMessage('What should I do for my follow-up care?')" class="gradio-quick-button">
+                                📅 Follow-up Care
+                            </button>
+                            <button onclick="gradioQuickMessage('I have questions about my discharge instructions')" class="gradio-quick-button">
+                                📋 Discharge Plan
+                            </button>
+                            <button onclick="gradioQuickMessage('How can I manage my condition at home?')" class="gradio-quick-button">
+                                🏠 Home Care Tips
+                            </button>
+                            <button onclick="gradioQuickMessage('What side effects should I watch for?')" class="gradio-quick-button">
+                                ⚠️ Side Effects
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% endif %}
+    </div>
+
+    <script>
+        // Gradio-style chat functionality
+        let isTyping = false;
+        
+        async function sendGradioMessage() {
+            const input = document.getElementById('gradioInput');
+            const sendBtn = document.getElementById('gradioSendBtn');
+            const message = input.value.trim();
+            
+            if (!message || isTyping) return;
+            
+            // Disable input and show typing
+            isTyping = true;
+            sendBtn.disabled = true;
+            showGradioTyping();
+            
+            // Add user message
+            addGradioMessage('user', message);
+            input.value = '';
+            autoResizeGradioInput();
+            
+            try {
+                const response = await fetch('/api/send_message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: message })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.response && result.response.messages) {
+                    const assistantMessages = result.response.messages.filter(msg => 
+                        msg.message_type === 'assistant_message' && 
+                        msg.content && 
+                        msg.content.trim() !== ''
+                    );
+                    
+                    if (assistantMessages.length > 0) {
+                        const lastMessage = assistantMessages[assistantMessages.length - 1];
+                        let content = lastMessage.content || 'I received your message.';
+                        content = content.replace(/\*\*Assistant:\*\*/g, '').replace(/\*\*Prof\.Dux:\*\*/g, '').trim();
+                        addGradioMessage('assistant', content);
+                    } else {
+                        addGradioMessage('assistant', 'I received your message. How can I help you today?');
+                    }
+                } else if (result.error) {
+                    addGradioMessage('assistant', `I'm sorry, I encountered an error: ${result.error}`);
+                } else {
+                    addGradioMessage('assistant', 'I apologize, but I\'m having trouble responding right now. Please try again in a moment.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addGradioMessage('assistant', 'I\'m having trouble connecting. Please check your internet connection and try again.');
+            } finally {
+                hideGradioTyping();
+                isTyping = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+        
+        function gradioQuickMessage(message) {
+            document.getElementById('gradioInput').value = message;
+            autoResizeGradioInput();
+            sendGradioMessage();
+        }
+        
+        function addGradioMessage(role, text) {
+            const messagesContainer = document.getElementById('gradioMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `gradio-message ${role}`;
+            
+            let avatar = '';
+            if (role === 'user') {
+                avatar = '{{ patient_name[0] }}';
+            } else if (role === 'system') {
+                avatar = '👩‍⚕️';
+            } else {
+                avatar = ''; // No emoji for Prof.Dux, just show image
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="gradio-avatar">${avatar}</div>
+                <div class="gradio-message-content">
+                    ${escapeHtml(text)}
+                    <div class="gradio-message-time">Just now</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        function showGradioTyping() {
+            document.getElementById('gradioTyping').style.display = 'block';
+        }
+        
+        function hideGradioTyping() {
+            document.getElementById('gradioTyping').style.display = 'none';
+        }
+        
+        function autoResizeGradioInput() {
+            const input = document.getElementById('gradioInput');
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('gradioInput');
+            
+            if (input) {
+                // Auto-resize input
+                input.addEventListener('input', autoResizeGradioInput);
+                
+                // Enter to send (Shift+Enter for new line)
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendGradioMessage();
+                    }
+                });
+                
+                // Focus input
+                input.focus();
+            }
+            
+            // Auto-scroll to bottom
+            const messagesContainer = document.getElementById('gradioMessages');
+            if (messagesContainer) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>

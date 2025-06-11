@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nurse Dashboard</title>
+    <link rel="stylesheet" href="/static/common.css">
+    <link rel="stylesheet" href="/static/nurse.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Nurse Dashboard</h1>
+            <a href="/logout" class="btn btn-sm">Logout</a>
+        </header>
+
+        <!-- Alerts Section -->
+        <div class="section">
+            <h2>Patient Alerts</h2>
+            <div id="alerts">
+                {% for alert in alerts %}
+                <div class="alert alert-{{ alert.priority }}">
+                    <strong>{{ alert.patient_name }}:</strong> {{ alert.message }}
+                    <span class="alert-time">{{ alert.timestamp[:19] if alert.timestamp else '' }}</span>
+                </div>
+                {% else %}
+                <p>No active alerts</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Patient Management Section -->
+        <div class="section">
+            <h2>Patient Management ({{ patients|length }} Active)</h2>
+            
+            <!-- Add New Patient -->
+            <div class="create-patient">
+                <h3>Add New Patient Agent</h3>
+                <form id="createPatientForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Patient Full Name:</label>
+                            <input type="text" name="name" required placeholder="e.g., John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Patient ID:</label>
+                            <input type="text" name="patient_id" required placeholder="e.g., P001" 
+                                   pattern="[A-Za-z0-9]+" title="Letters and numbers only">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Patient Email Address:</label>
+                            <input type="email" name="email" required placeholder="patient@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Allergies:</label>
+                            <input type="text" name="allergies" placeholder="Penicillin, Sulfa (comma separated)">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Medical Conditions:</label>
+                            <input type="text" name="conditions" placeholder="Diabetes, Hypertension (comma separated)">
+                        </div>
+                        <div class="form-group">
+                            <!-- Empty div to maintain grid layout -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Medications:</label>
+                        <div id="medications">
+                            <div class="medication-row">
+                                <input type="text" placeholder="Medicine name" class="med-name">
+                                <input type="text" placeholder="Dosage" class="med-dosage">
+                                <input type="text" placeholder="Frequency" class="med-frequency">
+                            </div>
+                        </div>
+                        <button type="button" onclick="addMedication()" class="btn btn-sm">Add Medication</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Discharge Plan:</label>
+                        <textarea name="discharge_plan" rows="3" placeholder="Follow-up instructions..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Create Patient Agent & Send Credentials</button>
+                </form>
+            </div>
+            
+            <!-- Active Patients List -->
+            <div class="patients-list">
+                <h3>Active Patients</h3>
+                {% for patient in patients %}
+                <div class="patient-card" id="patient-{{ patient.name.replace(' ', '-').lower() }}">
+                    <div class="patient-header">
+                        <h3>{{ patient.name }}</h3>
+                        <div class="patient-actions">
+                            <span class="patient-id">ID: {{ patient.patient_id or 'Not Set' }}</span>
+                            <span class="patient-email">📧 {{ patient.email or 'No email' }}</span>
+                            <button onclick="confirmDeletePatient('{{ patient.name }}')" class="btn btn-danger btn-sm">
+                                🗑️ Delete Patient
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="patient-details">
+                        <div class="detail-row">
+                            <div class="detail-col">
+                                <p><strong>Conditions:</strong> {{ patient.conditions|join(', ') or 'None' }}</p>
+                                <p><strong>Allergies:</strong> {{ patient.allergies|join(', ') or 'None' }}</p>
+                            </div>
+                            <div class="detail-col">
+                                <p><strong>Medications:</strong></p>
+                                {% if patient.medications %}
+                                <ul>
+                                    {% for med in patient.medications %}
+                                    <li>{{ med.name }}: {{ med.dosage }} {{ med.frequency }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <p><em>No medications listed</em></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if patient.discharge_plan %}
+                        <p><strong>Discharge Plan:</strong> {{ patient.discharge_plan }}</p>
+                        {% endif %}
+                        
+                        <div class="send-instruction">
+                            <textarea placeholder="Send care instruction to {{ patient.name }}..." 
+                                    class="instruction-text" data-patient="{{ patient.name }}"></textarea>
+                            <button onclick="sendInstruction('{{ patient.name }}')" class="btn btn-primary btn-sm">Send</button>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="no-patients">
+                    <p>No patients have been added yet. Create your first patient agent above.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Patient Deletion</h3>
+            <p>Are you sure you want to delete <strong id="deletePatientName"></strong>?</p>
+            <p><em>This action cannot be undone. The patient's AI agent and all conversation history will be permanently removed.</em></p>
+            <div class="modal-actions">
+                <button onclick="deletePatient()" class="btn btn-danger">Yes, Delete Patient</button>
+                <button onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/nurse.js"></script>
+</body>
+</html>

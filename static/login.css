@@ -1,0 +1,379 @@
+/* Login Page Specific Styles */
+
+/* Background Image for Login Page */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: transparent;
+    position: relative;
+    min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('/static/background.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    opacity: 0.3;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Login Box */
+.login-box {
+    background: rgba(255, 255, 255, 0.95); /* Semi-transparent white */
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-width: 600px;
+    margin: 50px auto;
+    backdrop-filter: blur(10px); /* Glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Login Tabs */
+.login-tabs {
+    display: flex;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+/* Basic styles for login page */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #8B1538;
+    font-size: 1.8em;
+}
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #8B1538;
+    color: white !important;
+    text-decoration: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 5px;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #6B1028;
+    color: white !important;
+}
+
+.btn-primary {
+    background: #8B1538;
+    color: white !important;
+}
+
+.btn-secondary {
+    background: #A91E47;
+    color: white !important;
+}
+
+.btn-large {
+    padding: 20px 40px;
+    font-size: 18px;
+    font-weight: 600;
+    color: white !important;
+}
+
+/* Tab styles */
+.tab-btn.active {
+    color: #8B1538;
+    border-bottom-color: #8B1538;
+}
+
+.tab-btn:hover {
+    background: #f8f9fa;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Role Section */
+.role-section {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.role-section h3 {
+    margin-bottom: 15px;
+    color: #666;
+}
+
+.role-section p {
+    margin-bottom: 20px;
+    color: #888;
+}
+
+/* Patient Login Form Styles */
+.patient-credential-form {
+    max-width: 400px;
+    margin: 0 auto 30px auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #8B1538;
+    font-size: 14px;
+}
+
+.login-input {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+
+.login-input:focus {
+    border-color: #8B1538;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 21, 56, 0.1);
+}
+
+.login-input::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* Login Divider */
+.login-divider {
+    text-align: center;
+    margin: 30px 0;
+    position: relative;
+}
+
+.login-divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #ddd;
+}
+
+.login-divider span {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0 15px;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Quick Patient Section */
+.quick-patient-section {
+    margin-top: 20px;
+}
+
+.quick-patient-section h4 {
+    color: #8B1538;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.quick-patient-section p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.quick-patient-section small {
+    font-size: 12px;
+    color: #999;
+}
+
+.patient-login-form {
+    margin: 0;
+}
+
+.btn-patient {
+    width: 100%;
+    text-align: left;
+    padding: 15px 20px;
+    background: #8B1538;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.btn-patient:hover {
+    background: #6B1028;
+    color: white !important;
+}
+
+.patient-info {
+    text-align: left;
+    color: white !important;
+}
+
+.patient-info strong {
+    display: block;
+    font-size: 16px;
+    color: white !important;
+}
+
+.patient-info small {
+    display: block;
+    opacity: 0.9;
+    font-size: 12px;
+    margin-top: 2px;
+    color: white !important;
+}
+
+.no-patients {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Magic Link Login Styles */
+.magic-login-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.magic-token-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    text-align: center;
+    font-family: monospace;
+    letter-spacing: 1px;
+    transition: border-color 0.3s;
+}
+
+.magic-token-input:focus {
+    border-color: #8B1538;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 21, 56, 0.1);
+}
+
+.magic-token-input::placeholder {
+    font-family: inherit;
+    letter-spacing: normal;
+    color: #999;
+}
+
+.magic-help {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(139, 21, 56, 0.1);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.magic-help p {
+    margin: 0;
+    color: #8B1538;
+}
+
+.magic-help small {
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Responsive for Login */
+@media (max-width: 768px) {
+    .login-box {
+        padding: 20px;
+        margin: 20px auto;
+    }
+    
+    .login-tabs {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        border-bottom: none;
+        border-right: 3px solid transparent;
+        font-size: 14px;
+        padding: 12px 15px;
+    }
+    
+    .tab-btn.active {
+        border-right-color: #8B1538;
+        border-bottom-color: transparent;
+    }
+    
+    .magic-token-input {
+        font-size: 14px;
+        padding: 12px;
+    }
+    
+    .btn-large {
+        padding: 15px 30px;
+        font-size: 16px;
+    }
+}

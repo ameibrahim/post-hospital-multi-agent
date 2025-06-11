@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  letta-server:
+    image: letta/letta:latest
+    ports:
+      - "8283:8283"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}  # Added OpenAI API key
+    volumes:
+      - letta_data:/app/.letta
+    command: ["letta", "server", "--host", "0.0.0.0", "--port", "8283", "--no-secure"]
+    networks:
+      - healthcare-network
+
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - LETTA_SERVER_URL=http://letta-server:8283
+      - GEMINI_API_KEY=${GEMINI_API_KEY}  # Keep for email service
+      - OPENAI_API_KEY=${OPENAI_API_KEY}  # Added for Letta client
+      - BREVO_API_KEY=${BREVO_API_KEY}
+      - SENDER_EMAIL=${SENDER_EMAIL}
+      - SENDER_NAME=${SENDER_NAME}
+      - HOSPITAL_NAME=${HOSPITAL_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+    depends_on:
+      - letta-server
+    volumes:
+      - .:/app
+    networks:
+      - healthcare-network
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  healthcare-network:
+    driver: bridge
+
+volumes:
+  letta_data:

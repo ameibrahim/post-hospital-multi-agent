@@ -1,0 +1,338 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+h1 {
+    color: #2c5aa0;
+    font-size: 1.8em;
+}
+
+h2 {
+    color: #2c5aa0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e0e0e0;
+    padding-bottom: 5px;
+}
+
+h3 {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+/* Login Page */
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    max-width: 500px;
+    margin: 50px auto;
+}
+
+.role-section {
+    margin: 30px 0;
+}
+
+.role-section h3 {
+    margin-bottom: 15px;
+    color: #666;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 12px 24px;
+    background: #2c5aa0;
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 5px;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #1e3d6f;
+}
+
+.btn-primary {
+    background: #2c5aa0;
+}
+
+.btn-secondary {
+    background: #6c757d;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 12px;
+}
+
+/* Sections */
+.section {
+    background: white;
+    margin-bottom: 20px;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Alerts */
+.alert {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+.alert-high {
+    background: #f8d7da;
+    border-color: #dc3545;
+    color: #721c24;
+}
+
+.alert-medium {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+    color: #0c5460;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Medications */
+.medication-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.medication-row input {
+    flex: 1;
+}
+
+.medication-row button {
+    padding: 8px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Patient Cards */
+.patient-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    background: #fafafa;
+}
+
+.patient-card h3 {
+    color: #2c5aa0;
+    margin-bottom: 15px;
+}
+
+.patient-card ul {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.send-instruction {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.instruction-text {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: none;
+}
+
+/* Patient Portal */
+.medical-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.info-group {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.info-group h4 {
+    color: #2c5aa0;
+    margin-bottom: 8px;
+}
+
+.info-group ul {
+    margin-left: 20px;
+}
+
+/* Chat */
+.chat-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.chat-messages {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background: #fafafa;
+}
+
+.message {
+    margin-bottom: 15px;
+}
+
+.message.user .message-content {
+    background: #2c5aa0;
+    color: white;
+    margin-left: 50px;
+}
+
+.message.assistant .message-content {
+    background: #e9ecef;
+    color: #333;
+    margin-right: 50px;
+}
+
+.message.nurse .message-content {
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #2c5aa0;
+    margin: 0 20px;
+    font-weight: bold;
+}
+
+.message-content {
+    padding: 10px 15px;
+    border-radius: 18px;
+    display: inline-block;
+    max-width: 80%;
+    word-wrap: break-word;
+}
+
+.chat-input {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+#messageInput {
+    flex: 1;
+    resize: none;
+    min-height: 60px;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.quick-actions .btn {
+    width: 100%;
+    text-align: left;
+    padding: 15px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .medication-row {
+        flex-direction: column;
+    }
+    
+    .send-instruction {
+        flex-direction: column;
+    }
+    
+    .chat-input {
+        flex-direction: column;
+    }
+    
+    .medical-info {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions {
+        grid-template-columns: 1fr;
+    }
+}

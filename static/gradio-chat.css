@@ -1,0 +1,409 @@
+/* Gradio-Style Chat Interface */
+
+/* Chat Section - Remove section styling but keep width constraints */
+.chat-section {
+    background: transparent !important;
+    padding: 25px !important; /* Keep same padding as regular sections */
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    margin-bottom: 20px !important;
+}
+
+.gradio-chat-container {
+    width: 100%;
+    margin: 0;
+    background: linear-gradient(135deg, #8B1538 0%, #A91E47 100%);
+    border-radius: 16px;
+    padding: 2px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.gradio-chat-inner {
+    background: rgba(255, 255, 255, 0.95); /* Semi-transparent white */
+    border-radius: 14px;
+    overflow: hidden;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(10px); /* Glass effect */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradio-chat-header {
+    background: linear-gradient(135deg, #530a20 0%, #A91E47 100%);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+.gradio-chat-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+}
+
+.gradio-chat-header p {
+    margin: 5px 0 0 0;
+    opacity: 0.95;
+    font-size: 0.9rem;
+    color: white;
+}
+
+.gradio-status-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 12px;
+    height: 12px;
+    background: #4ade80;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.gradio-messages-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #fafbff;
+    min-height: 400px;
+    max-height: 500px;
+}
+
+.gradio-message {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gradio-message.user {
+    flex-direction: row-reverse;
+}
+
+.gradio-message.system {
+    justify-content: center;
+}
+
+.gradio-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.gradio-message.user .gradio-avatar {
+    background: linear-gradient(135deg, #8B1538 0%, #A91E47 100%);
+    color: white;
+}
+
+/* Prof.Dux Avatar - Show only image, no emoji */
+.gradio-message.assistant .gradio-avatar {
+    background: url('/static/prof-dux-avatar.jpg') center/cover;
+    background-size: cover;
+    background-position: center;
+    color: transparent;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    /* Remove any text/emoji content */
+    font-size: 0;
+}
+
+.gradio-message.system .gradio-avatar {
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    color: white;
+}
+
+.gradio-message-content {
+    flex: 1;
+    max-width: 70%;
+    padding: 16px 20px;
+    border-radius: 18px;
+    position: relative;
+    word-wrap: break-word;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.gradio-message.user .gradio-message-content {
+    background: linear-gradient(135deg, #8B1538 0%, #A91E47 100%);
+    color: white;
+    border-bottom-right-radius: 6px;
+}
+
+.gradio-message.assistant .gradio-message-content {
+    background: white;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 6px;
+}
+
+.gradio-message.system .gradio-message-content {
+    background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+    color: #92400e;
+    border: 1px solid #fbbf24;
+    border-radius: 12px;
+    max-width: 80%;
+    text-align: center;
+    font-weight: 500;
+}
+
+.gradio-message-time {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-top: 8px;
+    text-align: right;
+}
+
+.gradio-message.user .gradio-message-time {
+    text-align: left;
+}
+
+.gradio-welcome-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}
+
+/* Prof.Dux Welcome Avatar - Show only image, no emoji */
+.gradio-welcome-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: url('/static/prof-dux-avatar.jpg') center/cover;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 25px rgba(74, 222, 128, 0.3);
+    border: 3px solid white;
+    /* Remove any text/emoji content */
+    font-size: 0;
+    color: transparent;
+}
+
+.gradio-input-container {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+}
+
+.gradio-input-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    position: relative;
+}
+
+.gradio-input-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.gradio-input {
+    width: 100%;
+    min-height: 50px;
+    max-height: 120px;
+    padding: 15px 50px 15px 20px;
+    border: 2px solid #e5e7eb;
+    border-radius: 25px;
+    font-size: 16px;
+    resize: none;
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.gradio-input:focus {
+    border-color: #8B1538;
+    box-shadow: 0 0 0 3px rgba(139, 21, 56, 0.1);
+}
+
+.gradio-input::placeholder {
+    color: #9ca3af;
+}
+
+.gradio-send-button {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #8B1538 0%, #A91E47 100%);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 16px;
+}
+
+.gradio-send-button:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(139, 21, 56, 0.4);
+}
+
+.gradio-send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: translateY(-50%) scale(1);
+}
+
+.gradio-typing-indicator {
+    display: none;
+    padding: 12px 20px;
+    background: rgba(139, 21, 56, 0.1);
+    border-radius: 20px;
+    margin: 10px 20px;
+    color: #8B1538;
+    font-style: italic;
+    text-align: center;
+}
+
+.gradio-typing-dots {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.gradio-typing-dots span {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #8B1538;
+    margin: 0 1px;
+    animation: typing 1.4s infinite;
+}
+
+.gradio-typing-dots span:nth-child(1) { animation-delay: 0s; }
+.gradio-typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.gradio-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-10px); }
+}
+
+.gradio-quick-actions {
+    padding: 0 20px 20px;
+    background: white;
+}
+
+.gradio-quick-actions h4 {
+    margin-bottom: 12px;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gradio-quick-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gradio-quick-button {
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    background: white;
+    color: #6b7280;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.gradio-quick-button:hover {
+    border-color: #8B1538;
+    color: #8B1538;
+    background: rgba(139, 21, 56, 0.05);
+}
+
+/* Scrollbar Styling */
+.gradio-messages-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.gradio-messages-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.gradio-messages-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.gradio-messages-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chat-section {
+        margin-bottom: 15px !important;
+        padding: 15px !important;
+    }
+    
+    .gradio-chat-container {
+        border-radius: 12px;
+    }
+    
+    .gradio-message-content {
+        max-width: 85%;
+    }
+    
+    .gradio-input {
+        padding: 12px 45px 12px 16px;
+        min-height: 44px;
+    }
+    
+    .gradio-send-button {
+        width: 32px;
+        height: 32px;
+        right: 6px;
+    }
+    
+    .gradio-quick-buttons {
+        flex-direction: column;
+    }
+    
+    .gradio-quick-button {
+        text-align: center;
+    }
+}
