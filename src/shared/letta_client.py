@@ -11,59 +11,93 @@ class LettaClient:
     def create_patient_agent(self, patient_data: Dict) -> str:
         """Create a patient agent with medical history using the new Letta API with OpenAI"""
         
-        # Create memory blocks using the new CreateBlock format
-        memory_blocks = [
-            CreateBlock(
-                label="persona",
-                value="""You are Prof.Dux, a caring and knowledgeable post-discharge healthcare assistant. Your role is to:
+        # Create enhanced memory blocks with patient information
+        persona_block = CreateBlock(
+            label="persona",
+            value=f"""You are Prof.Dux, a caring and knowledgeable post-discharge healthcare assistant specifically assigned to {patient_data['name']}.
 
-🩺 **Your Identity**: You are Prof.Dux, a dedicated healthcare AI assistant with extensive medical knowledge and a compassionate bedside manner.
+🩺 **Your Identity**: You are Prof.Dux, a dedicated healthcare AI assistant with extensive medical knowledge and a compassionate bedside manner, personally caring for {patient_data['name']}.
+
+📋 **Your Patient**: {patient_data['name']} (Patient ID: {patient_data.get('patient_id', 'Not Set')})
 
 📋 **Your Responsibilities**:
-1. Support patient recovery and wellness with personalized guidance
+1. Support {patient_data['name']}'s recovery and wellness with personalized guidance
 2. Monitor conversations for concerning symptoms and alert nurses when needed
-3. Provide clear, accurate medication guidance and scheduling
-4. Answer health questions with evidence-based information
-5. Offer emotional support and encouragement during recovery
+3. Provide clear medication guidance specific to {patient_data['name']}'s prescriptions
+4. Answer health questions with evidence-based information relevant to their conditions
+5. Offer emotional support and encouragement during {patient_data['name']}'s recovery
 6. Alert the nursing staff immediately if you detect urgent medical issues
 
 💡 **Your Communication Style**:
-- Always introduce yourself as "Prof.Dux" on first contact
+- Always address {patient_data['name']} by name and introduce yourself as "Prof.Dux"
 - Be warm, professional, and empathetic
-- Use clear, simple language that patients can understand
-- Provide specific, actionable advice when possible
-- Show genuine concern for the patient's wellbeing
+- Reference their specific medical conditions and medications when relevant
+- Provide specific, actionable advice based on their discharge plan
+- Show genuine concern for {patient_data['name']}'s wellbeing
 
 ⚠️ **Important Guidelines**:
-- If a patient reports severe symptoms, immediately recommend they contact their nurse
-- Never provide emergency medical advice - direct patients to call emergency services
-- Always encourage patients to follow their prescribed treatment plans
+- If {patient_data['name']} reports severe symptoms, immediately recommend they contact their nurse
+- Never provide emergency medical advice - direct them to call emergency services
+- Always encourage {patient_data['name']} to follow their prescribed treatment plans
 - Be encouraging but realistic about recovery expectations
+- Remember their allergies when discussing any treatments or medications
 
-Remember: You are here to support, guide, and care for patients during their recovery journey."""
-            ),
-            CreateBlock(
-                label="human",  
-                value=f"""Patient: {patient_data['name']} (ID: {patient_data.get('patient_id', 'Not Set')})
-
-📋 **Medical Profile**:
-• Medical Conditions: {', '.join(patient_data.get('conditions', [])) or 'None listed'}
-• Current Medications: {self._format_medications(patient_data.get('medications', []))}
-• Known Allergies: {', '.join(patient_data.get('allergies', [])) or 'None known'}
-• Discharge Plan: {patient_data.get('discharge_plan', 'Standard follow-up care')}
-
-🎯 **Care Focus**: Provide personalized support based on this patient's specific medical needs, medications, and recovery plan. Always consider their conditions and allergies when giving advice."""
-            )
-        ]
+Remember: You are {patient_data['name']}'s personal healthcare assistant, here to support, guide, and care for them during their recovery journey."""
+        )
         
-        # Create agent using OpenAI models instead of Gemini
+        # Create detailed patient information block
+        medical_info = self._format_medications(patient_data.get('medications', []))
+        patient_block = CreateBlock(
+            label="human",  
+            value=f"""PATIENT INFORMATION - ALWAYS REMEMBER THIS:
+
+👤 **Patient Details**:
+• Name: {patient_data['name']}
+• Patient ID: {patient_data.get('patient_id', 'Not Set')}
+• Email: {patient_data.get('email', 'Not provided')}
+
+🏥 **Medical History**:
+• Current Medical Conditions: {', '.join(patient_data.get('conditions', [])) or 'None listed'}
+• Known Allergies: {', '.join(patient_data.get('allergies', [])) or 'None known'}
+
+💊 **Current Medications**:
+{medical_info}
+
+📋 **Discharge Plan**:
+{patient_data.get('discharge_plan', 'Standard follow-up care')}
+
+🎯 **Care Instructions**: 
+Always reference this patient information when providing care. Address {patient_data['name']} by name, consider their specific conditions and medications, and be aware of their allergies. This is {patient_data['name']}'s personalized healthcare assistant session."""
+        )
+        
+        # Create agent using OpenAI models
         agent = self.client.agents.create(
             name=f"prof-dux-{patient_data['name'].lower().replace(' ', '-')}",
-            memory_blocks=memory_blocks,
-            model="openai/gpt-4o-mini",  # Changed from Gemini to OpenAI
-            embedding="openai/text-embedding-3-small",  # Changed from Gemini to OpenAI
-            context_window_limit=16000  # Added context window limit as shown in docs
+            memory_blocks=[persona_block, patient_block],
+            model="openai/gpt-4o-mini",
+            embedding="openai/text-embedding-3-small",
+            context_window_limit=16000
         )
+        
+        # Send an initial system message to reinforce patient context
+        try:
+            initial_context = f"""SYSTEM CONTEXT: You are now active as Prof.Dux, the personal healthcare assistant for {patient_data['name']} (ID: {patient_data.get('patient_id', 'Not Set')}). 
+
+Key patient information:
+- Conditions: {', '.join(patient_data.get('conditions', [])) or 'None'}
+- Medications: {len(patient_data.get('medications', []))} prescribed medications
+- Allergies: {', '.join(patient_data.get('allergies', [])) or 'None known'}
+
+When {patient_data['name']} messages you, greet them warmly by name and let them know you're here to help with their recovery. Always remember their specific medical information when providing guidance."""
+            
+            self.client.agents.messages.create(
+                agent_id=agent.id,
+                messages=[MessageCreate(role="system", content=initial_context)]
+            )
+            print(f"✅ Successfully initialized agent context for {patient_data['name']}")
+            
+        except Exception as e:
+            print(f"⚠️ Warning: Could not send initial context message: {e}")
         
         return agent.id
     
@@ -77,6 +111,29 @@ Remember: You are here to support, guide, and care for patients during their rec
             else:
                 role = "user"
                 content = message
+            
+            # Get agent memory to check if patient context is available
+            try:
+                agent = self.client.agents.get(agent_id)
+                patient_name = "Unknown Patient"
+                
+                # Extract patient name from memory blocks
+                if hasattr(agent, 'memory_blocks') and agent.memory_blocks:
+                    for block in agent.memory_blocks:
+                        if hasattr(block, 'value') and 'Patient Details' in str(block.value):
+                            # Extract patient name from the memory block
+                            import re
+                            name_match = re.search(r'Name: ([^\n]+)', str(block.value))
+                            if name_match:
+                                patient_name = name_match.group(1).strip()
+                                break
+                
+                # If this is a user message, enhance it with patient context reminder
+                if role == "user" and patient_name != "Unknown Patient":
+                    content = f"Patient {patient_name} says: {message}"
+                    
+            except Exception as e:
+                print(f"⚠️ Warning: Could not retrieve agent memory: {e}")
             
             response = self.client.agents.messages.create(
                 agent_id=agent_id,
@@ -120,12 +177,53 @@ Remember: You are here to support, guide, and care for patients during their rec
             raise Exception(f"Failed to send message: {str(e)}")
     
     def get_agent_memory(self, agent_id: str) -> Dict:
-        """Get agent's memory blocks"""
+        """Get agent's memory blocks for debugging"""
         try:
             agent = self.client.agents.get(agent_id)
-            return {"memory_blocks": agent.memory_blocks if hasattr(agent, 'memory_blocks') else []}
+            memory_info = {
+                "agent_name": getattr(agent, 'name', 'Unknown'),
+                "memory_blocks": []
+            }
+            
+            if hasattr(agent, 'memory_blocks') and agent.memory_blocks:
+                for i, block in enumerate(agent.memory_blocks):
+                    block_info = {
+                        "index": i,
+                        "label": getattr(block, 'label', 'unknown'),
+                        "value": str(getattr(block, 'value', ''))[:200] + "..." if len(str(getattr(block, 'value', ''))) > 200 else str(getattr(block, 'value', ''))
+                    }
+                    memory_info["memory_blocks"].append(block_info)
+            
+            return memory_info
         except Exception as e:
-            return {}
+            print(f"❌ Error getting agent memory: {e}")
+            return {"error": str(e)}
+    
+    def refresh_patient_context(self, agent_id: str, patient_data: Dict) -> bool:
+        """Refresh patient context in agent memory if needed"""
+        try:
+            # Send a context refresh message
+            context_refresh = f"""CONTEXT REFRESH: Remember, you are Prof.Dux caring for {patient_data['name']} (ID: {patient_data.get('patient_id', 'Not Set')}).
+
+Current patient details:
+• Medical Conditions: {', '.join(patient_data.get('conditions', [])) or 'None listed'}
+• Current Medications: {self._format_medications(patient_data.get('medications', []))}
+• Known Allergies: {', '.join(patient_data.get('allergies', [])) or 'None known'}
+• Discharge Plan: {patient_data.get('discharge_plan', 'Standard follow-up care')}
+
+Always address {patient_data['name']} by name and reference their specific medical information when providing guidance."""
+            
+            self.client.agents.messages.create(
+                agent_id=agent_id,
+                messages=[MessageCreate(role="system", content=context_refresh)]
+            )
+            
+            print(f"✅ Refreshed patient context for {patient_data['name']}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error refreshing patient context: {e}")
+            return False
     
     def list_agents(self) -> List[Dict]:
         """List all agents"""
