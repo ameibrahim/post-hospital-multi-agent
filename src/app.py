@@ -1,11 +1,34 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
+# Configure logging for production
+if os.getenv('FLASK_ENV') == 'production':
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(name)s %(message)s',
+        handlers=[
+            logging.FileHandler('/app/logs/app.log'),
+            logging.StreamHandler()
+        ]
+    )
+else:
+    logging.basicConfig(level=logging.DEBUG)
+
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
+
+# Production security settings
+if os.getenv('FLASK_ENV') == 'production':
+    app.config.update(
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax',
+        PERMANENT_SESSION_LIFETIME=3600,  # 1 hour
+    )
 
 # Initialize clients
 try:
@@ -14,17 +37,47 @@ try:
     from shared.email_service import EmailService
     
     letta_client = LettaClient()
-    storage = SimpleStorage()
+    storage = SimpleStorage(filename='/app/data/data.json')  # Persistent storage location
     email_service = EmailService()
     
-    print("✅ System initialized successfully")
+    app.logger.info("✅ System initialized successfully")
 except Exception as e:
-    print(f"❌ Error initializing clients: {e}")
+    app.logger.error(f"❌ Error initializing clients: {e}")
     import traceback
-    print(f"❌ Traceback: {traceback.format_exc()}")
+    app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
     letta_client = None
     storage = None
     email_service = None
+
+# Create data directory if it doesn't exist
+os.makedirs('/app/data', exist_ok=True)
+os.makedirs('/app/logs', exist_ok=True)
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        # Check if core services are available
+        health_status = {
+            'status': 'healthy',
+            'letta_client': bool(letta_client),
+            'storage': bool(storage),
+            'email_service': bool(email_service and email_service.api_instance),
+            'timestamp': str(datetime.datetime.now())
+        }
+        
+        if all([letta_client, storage, email_service]):
+            return jsonify(health_status), 200
+        else:
+            health_status['status'] = 'degraded'
+            return jsonify(health_status), 200
+            
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': str(datetime.datetime.now())
+        }), 500
 
 @app.route('/')
 def index():
@@ -58,6 +111,7 @@ def login():
     
     if role == 'nurse':
         session['role'] = 'nurse'
+        app.logger.info("Nurse logged in")
         return redirect(url_for('nurse_dashboard'))
     elif role == 'patient':
         patient_id = request.form.get('patient_id')
@@ -66,6 +120,7 @@ def login():
             if patient and patient.agent_id:
                 session['role'] = 'patient'
                 session['patient_id'] = patient_id
+                app.logger.info(f"Patient {patient.name} logged in")
                 return redirect(url_for('patient_dashboard', patient_id=patient_id))
         return redirect(url_for('index'))
     
@@ -86,10 +141,10 @@ def patient_login():
         if patient and patient.agent_id:
             session['role'] = 'patient'
             session['patient_id'] = patient_id
+            app.logger.info(f"Patient {patient.name} authenticated with credentials")
             return redirect(url_for('patient_dashboard', patient_id=patient_id))
     
-    # Authentication failed - redirect back with error
-    # For now, just redirect to index. You could add flash messages later
+    app.logger.warning(f"Failed authentication attempt for patient ID: {patient_id}")
     return redirect(url_for('index'))
 
 @app.route('/magic-login', methods=['GET', 'POST'])
@@ -103,6 +158,7 @@ def magic_login():
             if patient:
                 session['role'] = 'patient'
                 session['patient_id'] = patient.patient_id
+                app.logger.info(f"Patient {patient.name} authenticated with magic link")
                 return redirect(url_for('patient_dashboard', patient_id=patient.patient_id))
         return redirect(url_for('index'))
     
@@ -114,12 +170,14 @@ def magic_login():
             if patient:
                 session['role'] = 'patient'
                 session['patient_id'] = patient.patient_id
+                app.logger.info(f"Patient {patient.name} authenticated with manual token")
                 return redirect(url_for('patient_dashboard', patient_id=patient.patient_id))
         return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():
     """Clear session and return to login"""
+    app.logger.info("User logged out")
     session.clear()
     return redirect(url_for('index'))
 
@@ -195,9 +253,9 @@ def create_patient():
         try:
             agent_id = letta_client.create_patient_agent(patient.to_dict())
             patient.agent_id = agent_id
-            print(f"✅ Created Letta agent {agent_id} for {patient.name}")
+            app.logger.info(f"✅ Created Letta agent {agent_id} for {patient.name}")
         except Exception as letta_error:
-            print(f"⚠️ Warning: Could not create Letta agent: {letta_error}")
+            app.logger.warning(f"⚠️ Warning: Could not create Letta agent: {letta_error}")
             # Continue without Letta agent for now
             patient.agent_id = None
         
@@ -214,9 +272,9 @@ def create_patient():
                 request.host_url
             )
         except Exception as email_error:
-            print(f"⚠️ Warning: Could not send email: {email_error}")
+            app.logger.warning(f"⚠️ Warning: Could not send email: {email_error}")
         
-        print(f"✅ Created patient {patient.name} (Agent: {'✅' if patient.agent_id else '❌'}, Email: {'✅' if email_sent else '❌'})")
+        app.logger.info(f"✅ Created patient {patient.name} (Agent: {'✅' if patient.agent_id else '❌'}, Email: {'✅' if email_sent else '❌'})")
         
         return jsonify({
             'success': True, 
@@ -231,11 +289,12 @@ def create_patient():
         })
         
     except ValueError as e:
+        app.logger.error(f"Validation error creating patient: {e}")
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         import traceback
-        print(f"❌ Error creating patient: {e}")
-        print(f"❌ Traceback: {traceback.format_exc()}")
+        app.logger.error(f"❌ Error creating patient: {e}")
+        app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
         return jsonify({
             'error': str(e),
             'error_type': type(e).__name__
@@ -268,21 +327,21 @@ def delete_patient():
                 # Note: Letta client may not have a direct delete method
                 # This depends on the Letta API - you may need to implement this
                 # For now, we'll just remove from our storage
-                print(f"🗑️ Would delete Letta agent {patient.agent_id} for {patient_name}")
+                app.logger.info(f"🗑️ Would delete Letta agent {patient.agent_id} for {patient_name}")
             except Exception as e:
-                print(f"⚠️ Warning: Could not delete Letta agent {patient.agent_id}: {e}")
+                app.logger.warning(f"⚠️ Warning: Could not delete Letta agent {patient.agent_id}: {e}")
         
         # Delete from our storage
         success = storage.delete_patient(patient_name)
         
         if success:
-            print(f"✅ Deleted patient {patient_name}")
+            app.logger.info(f"✅ Deleted patient {patient_name}")
             return jsonify({'success': True, 'message': f'Patient {patient_name} deleted successfully'})
         else:
             return jsonify({'error': 'Patient not found'}), 404
             
     except Exception as e:
-        print(f"❌ Error deleting patient: {e}")
+        app.logger.error(f"❌ Error deleting patient: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/send_instruction', methods=['POST'])
@@ -313,11 +372,11 @@ def send_instruction():
         # Store the instruction
         storage.add_nurse_instruction(patient_name, instruction)
         
-        print(f"✅ Sent instruction to {patient_name}: {instruction}")
+        app.logger.info(f"✅ Sent instruction to {patient_name}: {instruction}")
         return jsonify({'success': True, 'response': response})
         
     except Exception as e:
-        print(f"❌ Error sending instruction: {e}")
+        app.logger.error(f"❌ Error sending instruction: {e}")
         return jsonify({'error': str(e)}), 500
 
 # PATIENT ROUTES
@@ -340,7 +399,7 @@ def patient_dashboard(patient_id):
             raw_messages = letta_client.get_agent_messages(patient.agent_id, limit=20)
             messages = _format_messages_for_display(raw_messages)
         except Exception as e:
-            print(f"❌ Error loading messages for {patient.name}: {e}")
+            app.logger.error(f"❌ Error loading messages for {patient.name}: {e}")
     
     return render_template('patient.html', 
                          patient=patient, 
@@ -370,7 +429,17 @@ def send_message():
         return jsonify({'error': 'Patient agent not found'}), 404
     
     try:
-        print(f"🔍 Sending message from {patient.name}: {message}")
+        app.logger.info(f"🔍 Sending message from {patient.name}: {message}")
+        
+        # Check if this is the first message - if so, refresh context
+        try:
+            recent_messages = letta_client.get_agent_messages(patient.agent_id, limit=5)
+            if len(recent_messages) < 2:  # Only system messages exist
+                app.logger.info(f"🔄 Refreshing patient context for {patient.name}")
+                letta_client.refresh_patient_context(patient.agent_id, patient.to_dict())
+        except Exception as e:
+            app.logger.warning(f"⚠️ Could not check/refresh context: {e}")
+        
         response = letta_client.send_message(patient.agent_id, message)
         
         # Enhanced alert detection
@@ -379,13 +448,60 @@ def send_message():
         # Filter response for clean display
         clean_response = _filter_agent_response(response)
         
-        print(f"✅ Response sent to {patient.name}")
+        app.logger.info(f"✅ Response sent to {patient.name}")
         return jsonify({'success': True, 'response': clean_response})
         
     except Exception as e:
-        print(f"❌ Error in send_message for {patient.name}: {e}")
+        app.logger.error(f"❌ Error in send_message for {patient.name}: {e}")
         import traceback
-        print(f"❌ Traceback: {traceback.format_exc()}")
+        app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
+        return jsonify({'error': str(e)}), 500
+
+# Add debugging endpoints for development
+@app.route('/api/debug/agent_memory/<patient_name>', methods=['GET'])
+def debug_agent_memory(patient_name):
+    """Debug endpoint to check agent memory (development only)"""
+    if session.get('role') != 'nurse':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    if not letta_client or not storage:
+        return jsonify({'error': 'System not initialized'}), 500
+    
+    patient = storage.get_patient_by_name(patient_name)
+    if not patient or not patient.agent_id:
+        return jsonify({'error': 'Patient or agent not found'}), 404
+    
+    try:
+        memory_info = letta_client.get_agent_memory(patient.agent_id)
+        return jsonify({
+            'success': True,
+            'patient_name': patient_name,
+            'agent_id': patient.agent_id,
+            'memory_info': memory_info
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/refresh_patient_context/<patient_name>', methods=['POST'])
+def refresh_patient_context(patient_name):
+    """Refresh patient context in agent memory"""
+    if session.get('role') != 'nurse':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    if not letta_client or not storage:
+        return jsonify({'error': 'System not initialized'}), 500
+    
+    patient = storage.get_patient_by_name(patient_name)
+    if not patient or not patient.agent_id:
+        return jsonify({'error': 'Patient or agent not found'}), 404
+    
+    try:
+        success = letta_client.refresh_patient_context(patient.agent_id, patient.to_dict())
+        if success:
+            return jsonify({'success': True, 'message': f'Context refreshed for {patient_name}'})
+        else:
+            return jsonify({'error': 'Failed to refresh context'}), 500
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 # UTILITY FUNCTIONS
@@ -493,14 +609,29 @@ def clear_alerts():
     storage.clear_alerts()
     return jsonify({'success': True})
 
+# Error handlers
+@app.errorhandler(404)
+def not_found_error(error):
+    return redirect(url_for('index'))
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error(f"Internal server error: {error}")
+    return jsonify({'error': 'Internal server error'}), 500
+
 if __name__ == '__main__':
-    print("🏥 Starting Enhanced Post-Hospital Care System...")
-    print(f"🔧 Letta client: {'✅ Ready' if letta_client else '❌ Not available'}")
-    print(f"💾 Storage: {'✅ Ready' if storage else '❌ Not available'}")
-    print(f"📧 Email service: {'✅ Ready' if email_service and email_service.api_instance else '❌ Not available'}")
+    import datetime
+    app.logger.info("🏥 Starting Enhanced Post-Hospital Care System...")
+    app.logger.info(f"🔧 Letta client: {'✅ Ready' if letta_client else '❌ Not available'}")
+    app.logger.info(f"💾 Storage: {'✅ Ready' if storage else '❌ Not available'}")
+    app.logger.info(f"📧 Email service: {'✅ Ready' if email_service and email_service.api_instance else '❌ Not available'}")
     
     if storage:
         stats = storage.get_statistics()
-        print(f"📊 System stats: {stats['total_patients']} patients, {stats['active_agents']} active agents")
+        app.logger.info(f"📊 System stats: {stats['total_patients']} patients, {stats['active_agents']} active agents")
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Production vs Development
+    if os.getenv('FLASK_ENV') == 'production':
+        app.run(host='0.0.0.0', port=5000, debug=False)
+    else:
+        app.run(host='0.0.0.0', port=5000, debug=True)
