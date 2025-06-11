@@ -225,5 +225,5 @@ window.addEventListener('online', function() {
 });
 
 window.addEventListener('offline', function() {
-    showToast('Connection lost. Please check your internet connection.', 5000);
+    showToast('Connection lost. Please check your internet connection.', 5011);
 });
