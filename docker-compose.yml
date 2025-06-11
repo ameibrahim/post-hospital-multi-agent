@@ -17,7 +17,7 @@ services:
   app:
     build: .
     ports:
-      - "5000:5000"
+      - "5011:5011"
     environment:
       - LETTA_SERVER_URL=http://letta-server:8283
       - GEMINI_API_KEY=${GEMINI_API_KEY}  # Keep for email service
